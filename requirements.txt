@@ -1,8 +1,0 @@
-streamlit
-streamlit-authenticator
-pandas
-fastapi
-uvicorn
-numpy
-scikit-learn
-tensorflow
