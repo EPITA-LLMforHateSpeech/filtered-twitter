@@ -7,7 +7,7 @@ This project involves building a text classification system designed to detect h
 ## Project Structure
 
 ```
-my_twitter/
+my_Twitter/
 │
 ├── backend/
 │   ├── app/
@@ -145,7 +145,7 @@ my_twitter/
 1. Navigate to the `backend` directory:
 
    ```sh
-   cd my_twitter/backend
+   cd filtered-twitter/my_Twitter
    ```
 
 2. Run the FastAPI server:
@@ -218,7 +218,7 @@ batch_prediction = predict_batch(test_data)
 print("Batch Prediction Results:", batch_prediction)
 ```
 
-## Development
+## Development [incomplete implementation]
 
 ### Running Tests
 
