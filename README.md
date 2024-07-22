@@ -62,8 +62,8 @@ my_Twitter/
 1. **Clone the repository:**
 
    ```sh
-   git clone https://github.com/EPITA-LLMforHateSpeech/my_twitter.git
-   cd my_twitter/my_Twitter
+   git clone https://github.com/EPITA-LLMforHateSpeech/filtered-twitter.git
+   cd filtered-twitter
    ```
 
 2. **Create and activate a virtual environment:**
@@ -142,10 +142,10 @@ my_Twitter/
 
 ### Start FastAPI Backend
 
-1. Navigate to the `backend` directory:
+1. Navigate to where the `backend` directory is located:
 
    ```sh
-   cd filtered-twitter/my_Twitter
+   cd my_Twitter
    ```
 
 2. Run the FastAPI server:
@@ -161,7 +161,7 @@ my_Twitter/
 1. Navigate to the `streamlit` directory:
 
    ```sh
-   cd my_twitter/streamlit
+   cd my_Twitter/streamlit
    ```
 
 2. Run the Streamlit app:
@@ -225,7 +225,7 @@ print("Batch Prediction Results:", batch_prediction)
 1. Navigate to the `tests` directory:
 
    ```sh
-   cd my_twitter/tests
+   cd my_Twitter/tests
    ```
 
 2. Run the tests:
