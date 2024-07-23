@@ -4,7 +4,7 @@ import streamlit_authenticator as stauth
 from user_management import UserManager
 from tweet_management import TweetManager
 from profile_management import ProfileManager
- 
+
 # Load user data
 with open('user.json') as f:
     users = json.load(f)
@@ -30,7 +30,8 @@ interaction_manager = TweetManager()
 tweet_manager = TweetManager()
 user_manager = UserManager()
 profile_manager = ProfileManager(user_manager)
- 
+
+
 # Initialize the authenticator
 authenticator = stauth.Authenticate(
     credentials,
@@ -73,9 +74,13 @@ if authentication_status:
  
     # elif choice == "Admin":
     #     st.subheader("Admin")
-    #     admin_management.admin_dashboard()
+    #     admin_management.admin_page(username)
 
 elif authentication_status is False:
     st.error("Username/password is incorrect")
 elif authentication_status is None:
     st.warning("Please enter your username and password")
+
+
+###########################################################################################################################
+
