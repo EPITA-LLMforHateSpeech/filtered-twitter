@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from backend.database.db import SessionLocal
 from backend.database.models import StoredTweet as StoredTweetModel, Tweet as TweetModel, UpdateSafetyStatus, SafetyStatusChange

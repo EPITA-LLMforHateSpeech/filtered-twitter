@@ -23,10 +23,14 @@ class Tweet(Base):
     retweets = Column(Integer, default=0)
     logreg_prob = Column(Float, nullable=True)
     logreg_result = Column(Integer, nullable=True)
+    logreg_prob = Column(Float, nullable=True)
+    logreg_result = Column(Integer, nullable=True)
     cnn_prob = Column(Float, nullable=True)
     cnn_result = Column(Integer, nullable=True)
     admin_result = Column(Integer, nullable=True)
 
+class StoredTweet(Base):
+    __tablename__ = "stored_tweets"
 class StoredTweet(Base):
     __tablename__ = "stored_tweets"
 
@@ -34,6 +38,7 @@ class StoredTweet(Base):
     tweet_id = Column(String, unique=True, index=True)
     retweet_id = Column(String, nullable=True)
     user_id = Column(String, nullable=False)
+    text = Column(Text, nullable=False)
     text = Column(Text, nullable=False)
     likes = Column(Integer, default=0)
     retweets = Column(Integer, default=0)
