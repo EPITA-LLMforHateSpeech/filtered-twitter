@@ -4,7 +4,8 @@ from typing import Union, List
 import pickle
 from tensorflow.keras.models import load_model
 from backend.app.utils.preprocess import preprocess_tfidf, preprocess_cnn
-from backend.database.db import SessionLocal, Tweet as TweetModel
+from backend.database.db import SessionLocal
+from backend.database.models import Tweet as TweetModel
 import joblib
 from sqlalchemy.orm import Session
 import os
@@ -20,16 +21,19 @@ script_dir = os.path.dirname(__file__)
 logreg_model_path = os.path.join(script_dir, '..\\..\\models\\logistic_regression_model.pkl')
 cnn_model_path = os.path.join(script_dir, '..\\..\\models\\cnn_model_regularization.keras')
 
-
 logreg_model = joblib.load(logreg_model_path)
 cnn_model = load_model(cnn_model_path)
 
+
 class SingleTextData(BaseModel):
     text: str
+    user: str
+
 
 class BatchTextData(BaseModel):
     tweet_ids: List[str]  # List of tweet IDs
     texts: List[str]
+
 
 # Dependency
 def get_db():
@@ -39,13 +43,6 @@ def get_db():
     finally:
         db.close() # Dependency for total tweets
 
-# Dependency for posted tweets
-def get_posted_db():
-    db = PostedSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def generate_tweet_id(text: str) -> str:
     sha256_hash = hashlib.sha256(text.encode()).hexdigest() # Create a SHA-256 hash of the text
@@ -57,6 +54,7 @@ def generate_tweet_id(text: str) -> str:
 def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(get_db)):
     if isinstance(data, SingleTextData):
         text_data = [data.text]
+        user = data.user
 
         # Preprocess for TF-IDF and make predictions
         X_tfidf = preprocess_tfidf(text_data)
@@ -71,18 +69,18 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
         
         if tweet:
             # Update existing tweet
-            tweet.linreg_prob = logreg_prob
-            tweet.linreg_result = int(logreg_pred)
+            tweet.logreg_prob = logreg_prob
+            tweet.logreg_result = int(logreg_pred)
         else:
             # Insert new tweet if not found
             tweet = TweetModel(
                 tweet_id=tweet_id,
                 tweet=data.text,
-                user="some_user",
+                user=user,
                 likes=0,
                 retweets=0,
-                linreg_prob=logreg_prob,
-                linreg_result=int(logreg_pred),
+                logreg_prob=logreg_prob,
+                logreg_result=int(logreg_pred),
                 cnn_prob=None,  # No CNN prediction for single requests
                 cnn_result=None
             )
@@ -94,11 +92,11 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
         return {
             "tweet_id": tweet_id,
             "tweet": data.text,
-            "user": "some_user",
+            "user": user,
             "likes": 0,
             "retweets": 0,
-            "linreg_prob": float(logreg_prob),  # Convert numpy.float32 to float
-            "linreg_result": int(logreg_pred),
+            "logreg_prob": float(logreg_prob),  # Convert numpy.float32 to float
+            "logreg_result": int(logreg_pred),
             "cnn_prob": None,
             "cnn_result": None
         }
@@ -121,7 +119,7 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
                 raise HTTPException(status_code=404, detail=f"Tweet with ID {tweet_id} not found.")
             
             cnn_pred = cnn_preds[i]
-            cnn_prob = float(max(cnn_pred[0], 1 - cnn_pred[0]))  # Convert numpy.float32 to float
+            cnn_prob = float(cnn_pred[0]) # Convert numpy.float32 to float
             cnn_result = int(cnn_pred[0] > 0.5)
             
             # Update existing tweet in database
@@ -137,8 +135,8 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
                 "user": tweet.user,
                 "likes": tweet.likes,
                 "retweets": tweet.retweets,
-                "linreg_prob": float(tweet.linreg_prob),  # Convert numpy.float32 to float
-                "linreg_result": tweet.linreg_result,
+                "logreg_prob": float(tweet.logreg_prob),  # Convert numpy.float32 to float
+                "logreg_result": tweet.logreg_result,
                 "cnn_prob": cnn_prob,
                 "cnn_result": cnn_result
             })
