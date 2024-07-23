@@ -1,14 +1,36 @@
 import streamlit as st
 from user_management import UserManager
+import requests
  
 class TweetManager:
     def __init__(self):
         self.user_manager = UserManager()
+        # Define FastAPI endpoints
+        self.base_url = 'http://localhost:8000'
  
     def create_tweet(self, username, tweet_text):
         users = self.user_manager.load_users()
         tweet_id = max([tweet["id"] for user in users['usernames'].values() for tweet in user["tweets"]], default=0) + 1
-        users['usernames'][username]["tweets"].append({"id": tweet_id, "text": tweet_text, "like": 0, "retweet": 0, "safety_status": "pending"})
+        # Make a single prediction request
+        data = {
+            'tweet_id': tweet_id,
+            'text':tweet_text,
+            'user':username
+             }
+        # Send the POST request to the /predict endpoint
+        response = requests.post(f'{self.base_url}/predict', json=data)
+        # Return the response as JSON
+        json_response = response.json()
+        users['usernames'][username]["tweets"].append({
+          "id": tweet_id, 
+          "text": tweet_text, 
+          "like": 0, 
+          "retweet": 0, 
+          "logreg_prob" :json_response["logreg_prob"],
+          "logreg_result": json_response["logreg_result"],
+          "cnn_prob": json_response["cnn_prob"],
+          "cnn_result": json_response["cnn_result"]
+        })
         self.user_manager.save_users(users)
  
     def delete_tweet(self, username, tweet_id):
@@ -30,7 +52,7 @@ class TweetManager:
         for user, user_data in users['usernames'].items():
             st.write(f"**{user_data['name']} ({user}):**")
             for tweet in user_data["tweets"]:
-                st.write(f"{tweet['text']}(Likes: {tweet['like']}, Retweets: {tweet['retweet']}, Status: {tweet['safety_status']})")
+                st.write(f"{tweet['text']}(Likes: {tweet['like']}, Retweets: {tweet['retweet']},Status: {tweet['safety_status']}, LogReg Prob: {tweet['logreg_prob']}, LogReg Result: {tweet['logreg_result']}, CNN Prob: {tweet['cnn_prob']}, CNN Result: {tweet['cnn_result']})")
                 if st.button(f'Like Tweet {tweet["id"]}', key=f'like_{tweet["id"]}'):
                     self.like_tweet(username, tweet["id"])
                     st.success('Tweet liked successfully')
