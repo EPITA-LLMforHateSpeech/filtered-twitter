@@ -1,22 +1,15 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from backend.database.models import Base, Tweet  # Import the Tweet model
 
-DATABASE_URL = "sqlite:///./tweets.db"
-POSTED_DATABASE_URL = "sqlite:///./posted_tweets.db"
-
+DATABASE_URL = "sqlite:///./tweets.db"  # Update with your database URL
 
 engine = create_engine(DATABASE_URL)
-PostedEngine = create_engine(POSTED_DATABASE_URL)
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-PostedSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=PostedEngine)
 
-Base = declarative_base()
-
-def init_db():
-    Base.metadata.create_all(bind=engine)
-    Base.metadata.create_all(bind=PostedEngine)
+# Create the database tables
+Base.metadata.create_all(bind=engine)
 
 # class Tweet(Base):
 #     __tablename__ = "tweets"
