@@ -77,3 +77,13 @@ def update_safety_status(data: UpdateSafetyStatus, db: Session = Depends(get_db)
     db.refresh(tweet)
     
     return {"message": "Safety status updated successfully"}
+
+@router.get("/safety_status_changes")
+def get_safety_status_changes(db: Session = Depends(get_db)):
+    # Fetch records from the SafetyStatusChange model
+    status_changes = db.query(SafetyStatusChange).all()
+    
+    if not status_changes:
+        raise HTTPException(status_code=404, detail="No safety status changes found")
+    
+    return status_changes
