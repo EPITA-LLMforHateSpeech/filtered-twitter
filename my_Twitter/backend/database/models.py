@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 from typing import Optional
 from pydantic import BaseModel
 
-DATABASE_URL = "sqlite:///./tweets.db"
+DATABASE_URL = "sqlite:///./filtered_tweets.db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -29,8 +29,7 @@ class Tweet(Base):
     cnn_result = Column(Integer, nullable=True)
     admin_result = Column(Integer, nullable=True)
 
-class StoredTweet(Base):
-    __tablename__ = "stored_tweets"
+
 class StoredTweet(Base):
     __tablename__ = "stored_tweets"
 
@@ -83,7 +82,7 @@ class TweetSchema(BaseModel):
 class StoreTweetSchema(BaseModel):
     tweet_id: str
     retweet_id: Optional[str] = None
-    user: str
+    user_id: str
     text: str
     likes: int = 0
     retweets: int = 0
