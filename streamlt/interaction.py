@@ -56,4 +56,12 @@ class InteractionManager:
         for username, user_data in users['usernames'].items():
             for tweet in user_data['tweets']:
                 st.write(f"{user_data['name']}: {tweet['text']} (Likes: {tweet['like']}, Retweets: {tweet['retweet']}, Status: {tweet['safety_status']})")
-               
+                if st.button(f'Like Tweet {tweet["id"]}', key=f'like_{username}_{tweet["id"]}'):
+                    self.like_tweet(username, tweet["id"])
+                    st.success('Tweet liked successfully')
+                if st.button(f'Retweet {tweet["id"]}', key=f'retweet_{username}_{tweet["id"]}'):
+                    self.retweet(username, tweet["id"])
+                    st.success('Retweeted successfully')
+                if st.button(f'Report Tweet {tweet["id"]}', key=f'report_{username}_{tweet["id"]}'):
+                    self.report_tweet(username, tweet["id"])
+                    st.success('Tweet reported successfully')
