@@ -69,8 +69,8 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
         
         if tweet:
             # Update existing tweet
-            tweet.linreg_prob = logreg_prob
-            tweet.linreg_result = int(logreg_pred)
+            tweet.logreg_prob = logreg_prob
+            tweet.logreg_result = int(logreg_pred)
         else:
             # Insert new tweet if not found
             tweet = TweetModel(
@@ -79,8 +79,8 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
                 user=user,
                 likes=0,
                 retweets=0,
-                linreg_prob=logreg_prob,
-                linreg_result=int(logreg_pred),
+                logreg_prob=logreg_prob,
+                logreg_result=int(logreg_pred),
                 cnn_prob=None,  # No CNN prediction for single requests
                 cnn_result=None
             )
@@ -95,8 +95,8 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
             "user": user,
             "likes": 0,
             "retweets": 0,
-            "linreg_prob": float(logreg_prob),  # Convert numpy.float32 to float
-            "linreg_result": int(logreg_pred),
+            "logreg_prob": float(logreg_prob),  # Convert numpy.float32 to float
+            "logreg_result": int(logreg_pred),
             "cnn_prob": None,
             "cnn_result": None
         }
@@ -135,8 +135,8 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
                 "user": tweet.user,
                 "likes": tweet.likes,
                 "retweets": tweet.retweets,
-                "linreg_prob": float(tweet.linreg_prob),  # Convert numpy.float32 to float
-                "linreg_result": tweet.linreg_result,
+                "logreg_prob": float(tweet.logreg_prob),  # Convert numpy.float32 to float
+                "logreg_result": tweet.logreg_result,
                 "cnn_prob": cnn_prob,
                 "cnn_result": cnn_result
             })

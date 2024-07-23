@@ -1,54 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.schemas.tweet import TweetCreate, Tweet
-from backend.database.db import SessionLocal, PostedSessionLocal
-from backend.database.models import Tweet as TweetModel, PostedTweet as PostedTweetModel
+from backend.database.db import SessionLocal
+from backend.database.models import StoredTweet, Tweet as TweetModel
 
 router = APIRouter()
 
-# Dependency for tweets database
-def get_tweets_db():
+class StoreTweetData(BaseModel):
+    tweet_id: str
+    user_id: str
+
+# Dependency
+def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
-# Dependency for posted tweets database
-def get_posted_db():
-    db = PostedSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 @router.post("/store_tweet")
-def store_tweet(tweet_id: str, user_id: str, db: Session = Depends(get_tweets_db), posted_db: Session = Depends(get_posted_db)):
-    tweet = db.query(TweetModel).filter(TweetModel.tweet_id == tweet_id).first()
-    if not tweet:
-        raise HTTPException(status_code=404, detail=f"Tweet with ID {tweet_id} not found.")
+def store_tweet(data: StoreTweetData, db: Session = Depends(get_db)):
+    # Retrieve the original tweet from the main tweets table
+    original_tweet = db.query(TweetModel).filter(TweetModel.tweet_id == data.tweet_id).first()
+
+    # Find the original tweet
+    if original_tweet is None:
+        print(f"Storing tweet: Tweet with tweet_id {data.tweet_id} not found in tweets table. This probably means that prediction has failed.")
+        raise HTTPException(status_code=404, detail="Original tweet not found.")
     
-    # Store the tweet in the posted tweets database
-    posted_tweet = PostedTweetModel(
-        tweet_id=tweet.tweet_id,
-        retweet_id=tweet.retweet_id,
-        user_id=user_id,
-        tweet=tweet.tweet,
-        likes=tweet.likes,
-        retweets=tweet.retweets,
-        safety_status=tweet.cnn_result
+    # Insert the tweet into the stored_tweets table
+    stored_tweet = StoredTweet(
+        tweet_id=data.tweet_id,
+        retweet_id=original_tweet.retweet_id,  # Handle None values
+        user_id=data.user_id,
+        text=original_tweet.tweet,
+        likes=original_tweet.likes,
+        retweets=original_tweet.retweets,
+        safety_status=original_tweet.cnn_result  # Assuming safety_status is derived from CNN result
     )
-    posted_db.add(posted_tweet)
-    posted_db.commit()
-    posted_db.refresh(posted_tweet)
-    
-    return {
-        "tweet_id": posted_tweet.tweet_id,
-        "retweet_id": posted_tweet.retweet_id,
-        "user_id": posted_tweet.user_id,
-        "tweet": posted_tweet.tweet,
-        "likes": posted_tweet.likes,
-        "retweets": posted_tweet.retweets,
-        "safety_status": posted_tweet.safety_status
-    }
+    db.add(stored_tweet)
+    db.commit()
+    db.refresh(stored_tweet)
+    return stored_tweet
