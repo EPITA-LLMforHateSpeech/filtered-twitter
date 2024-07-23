@@ -2,9 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from backend.database.db import SessionLocal
-from backend.database.models import StoredTweet, Tweet as TweetModel
+from backend.database.models import StoredTweet as StoredTweetModel, Tweet as TweetModel, UpdateSafetyStatus, SafetyStatusChange
 
 router = APIRouter()
+
+class UpdateSafetyStatus(BaseModel):
+    tweet_id: str
+    new_safety_status: int
+    change_source: str  # 'cnn' or 'admin'
 
 class StoreTweetData(BaseModel):
     tweet_id: str
@@ -29,16 +34,46 @@ def store_tweet(data: StoreTweetData, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Original tweet not found.")
     
     # Insert the tweet into the stored_tweets table
-    stored_tweet = StoredTweet(
+    stored_tweet = StoredTweetModel(
         tweet_id=data.tweet_id,
-        retweet_id=original_tweet.retweet_id,  # Handle None values
+        retweet_id=original_tweet.retweet_id,
         user_id=data.user_id,
         text=original_tweet.tweet,
         likes=original_tweet.likes,
         retweets=original_tweet.retweets,
-        safety_status=original_tweet.cnn_result  # Assuming safety_status is derived from CNN result
+        safety_status=original_tweet.cnn_result
     )
     db.add(stored_tweet)
     db.commit()
     db.refresh(stored_tweet)
     return stored_tweet
+
+@router.post("/update_safety_status")
+def update_safety_status(data: UpdateSafetyStatus, db: Session = Depends(get_db)):
+    tweet = db.query(TweetModel).filter(TweetModel.tweet_id == data.tweet_id).first()
+    if not tweet:
+        raise HTTPException(status_code=404, detail="Tweet not found")
+    
+    # Update StoredTweetModel
+    stored_tweet = db.query(StoredTweetModel).filter(StoredTweetModel.tweet_id == data.tweet_id).first()
+    if stored_tweet:
+        stored_tweet.safety_status = data.new_safety_status
+    else:
+        raise HTTPException(status_code=404, detail="Stored tweet not found")
+
+    # Update the admin result if the caller is admin
+    if data.change_source == 'admin':
+        tweet.admin_result = data.new_safety_status
+
+    # Log the change
+    safety_status_change = SafetyStatusChange(
+        tweet_id=data.tweet_id,
+        new_safety_status=data.new_safety_status,
+        change_source=data.change_source
+    )
+    db.add(safety_status_change)
+    
+    db.commit()
+    db.refresh(tweet)
+    
+    return {"message": "Safety status updated successfully"}
