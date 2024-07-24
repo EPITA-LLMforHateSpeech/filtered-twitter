@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from backend.database.db import SessionLocal, Tweet as TweetModel
 from backend.database.models import TweetSchema, StoredTweet as StoredTweetModel
+from backend.database.models import TweetSchema, StoreTweetSchema
 
 router = APIRouter()
 
@@ -31,3 +32,13 @@ def display_tweets(db: Session = Depends(get_db)):
         return {"message": "No tweets found"}
     
     return tweets
+
+# Fetch tweet by ID
+@router.get("/fetch_tweet/{tweet_id}", response_model=StoreTweetSchema)
+def fetch_tweet(tweet_id: str, db: Session = Depends(get_db)):
+    tweet = db.query(StoredTweetModel).filter(StoredTweetModel.tweet_id == tweet_id).first()
+    
+    if not tweet:
+        raise HTTPException(status_code=404, detail="Tweet not found")
+    
+    return tweet
