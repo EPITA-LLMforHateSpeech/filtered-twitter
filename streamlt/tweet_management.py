@@ -35,7 +35,7 @@ class TweetManager:
         prediction = self.post_tweet_for_prediction(tweet_text, username)
         
         if prediction["logreg_result"] != 1:
-            created_at = datetime.now(timezone.utc).isoformat()  # Convert datetime to ISO format string
+            created_at = datetime.now(timezone.utc).isoformat()  # Convert datetime to ISO format strin
             
             store_response = self.store_posted_tweet(
                 tweet_id=tweet_id,
