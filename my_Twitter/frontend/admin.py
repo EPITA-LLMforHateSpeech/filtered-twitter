@@ -19,7 +19,7 @@ def update_safety_status(tweet_id, new_safety_status, change_source):
     data = {
         "tweet_id": tweet_id,
         "new_safety_status": new_safety_status,
-        "change_source": 'admin'
+        "change_source": change_source
     }
     response = requests.post(f"{BASE_URL}/update_safety_status", json=data)
     return response.json()
@@ -37,13 +37,14 @@ def fetch_tweet_by_id(tweet_id):
 def load_admin_page():
     st.header("Admin Panel")
 
+    # Goes under All tweets ##########################################################
     # Fetch all tweets section
     st.subheader("Fetch All Tweets")
-    if st.button("Fetch All Tweets"):
+    if st.button("Fetch All Tweets"): # no buttons 
         all_tweets = fetch_all_tweets()
         for tweet in all_tweets:
             # Display username in small text
-            st.markdown(f"<small>{tweet.get('user', 'Not available')}</small>", unsafe_allow_html=True)
+            st.markdown(f"<small>{tweet.get('user', 'Not available')} |  tweet id: {tweet.get('tweet_id', '')}</small>", unsafe_allow_html=True)
 
             # Display tweet content
             st.write(tweet.get('tweet', 'Not available'))
@@ -63,31 +64,47 @@ def load_admin_page():
             # Add a separator line
             st.write("---")
 
-
+    ##################################################################
+    # Goes under pending
     # Fetch reported tweets section
     st.subheader("Fetch Reported Tweets")
-    if st.button("Fetch Reported Tweets"):
+    if st.button("Fetch Reported Tweets"): # no buttons 
         reported_tweets = fetch_reported_tweets()
         for report in reported_tweets:
             tweet = fetch_tweet_by_id(report['tweet_id'])
             if tweet:
                 # Display tweet details
-                st.markdown(f"<small>{tweet.get('user', 'Not available')}</small>", unsafe_allow_html=True)
-                st.write(tweet.get('tweet', 'Not available'))
+                st.markdown(f"<small>{tweet.get('user_id', 'Not available')} \t\t |  tweet id: {report.get('tweet_id', '')}</small>", unsafe_allow_html=True)
+                st.write(tweet.get('text', 'Not available'))
                 st.markdown(
-                    f"<small>Likes: {tweet.get('likes', 'Not available')} | Retweets: {tweet.get('retweets', 'Not available')} | Admin Result: {tweet.get('admin_result', 'Not available')}</small>",
+                    f"<small>Likes: {tweet.get('likes', 'Not available')} \t\t| Retweets: {tweet.get('retweets', 'Not available')} \t\t| Admin Result: {tweet.get('admin_result', 'Not available')}</small>",
                     unsafe_allow_html=True
                 )
                 st.markdown(
-                    f"<small>Logreg Prob: {tweet.get('logreg_prob', 'Not available')} | Logreg Result: {tweet.get('logreg_result', 'Not available')} | CNN Prob: {tweet.get('cnn_prob', 'Not available')} | CNN Result: {tweet.get('cnn_result', 'Not available')}</small>",
+                    f"<small>Logreg Prob: {tweet.get('logreg_prob', 'Not available')} \t\t| Logreg Result: {tweet.get('logreg_result', 'Not available')} \t\t| CNN Prob: {tweet.get('cnn_prob', 'Not available')} \t\t| CNN Result: {tweet.get('cnn_result', 'Not available')}</small>",
                     unsafe_allow_html=True
                 )
-                st.write(f"Reported By: {report.get('reported_by', 'Not available')}")
+                st.write(f"Reported By: {report.get('user_id', 'Not available')}")
                 st.write("---")
+
+
+
+    # Update safety status section
+    st.subheader("Update Safety Status")
+    tweet_id = st.text_input("Tweet ID")
+    new_safety_status = st.selectbox("New Safety Status", [0, 1])
+    change_source = st.selectbox("Change Source", ["admin"])
+
+    if st.button("Update Safety Status"):
+        result = update_safety_status(tweet_id, new_safety_status, change_source)
+        st.write(result)
+
+###############################################################################################
+
 
     # Fetch safety status changes section
     st.subheader("Fetch Safety Status Changes")
-    if st.button("Fetch Safety Status Changes"):
+    if st.button("Fetch Safety Status Changes"): 
         status_changes = fetch_safety_status_changes()
         for change in status_changes:
             st.write(f"Tweet ID: {change['tweet_id']}")
@@ -95,12 +112,4 @@ def load_admin_page():
             st.write(f"Change Source: {change['change_source']}")
             st.write("---")
 
-    # Update safety status section
-    st.subheader("Update Safety Status")
-    tweet_id = st.text_input("Tweet ID")
-    new_safety_status = st.selectbox("New Safety Status", [0, 1])
-    change_source = st.selectbox("Change Source", ["admin", "cnn"])
-
-    if st.button("Update Safety Status"):
-        result = update_safety_status(tweet_id, new_safety_status, change_source)
-        st.write(result)
+########################### add another tab for statistics 
