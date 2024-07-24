@@ -129,7 +129,7 @@ def load_admin_page():
     # Display tweets over time
     st.subheader("Tweets Over Time")
     tweets_df['created_at'] = pd.to_datetime(tweets_df['created_at'])
-    tweets_time_chart = alt.Chart(tweets_df).mark_line().encode(
+    tweets_time_chart = all.Chart(tweets_df).mark_line().encode(
         x='yearmonthdate(created_at):T',
         y='count():Q'
     ).properties(
