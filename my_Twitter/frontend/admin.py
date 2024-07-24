@@ -112,8 +112,4 @@ def load_admin_page():
             st.write(f"Change Source: {change['change_source']}")
             st.write("---")
 
-
 ########################### add another tab for statistics 
-
-
-    
