@@ -52,7 +52,7 @@ class TweetManager:
         for user, user_data in users['usernames'].items():
             st.write(f"**{user_data['name']} ({user}):**")
             for tweet in user_data["tweets"]:
-                st.write(f"{tweet['text']}(Likes: {tweet['like']}, Retweets: {tweet['retweet']},Status: {tweet['safety_status']}, LogReg Prob: {tweet['logreg_prob']}, LogReg Result: {tweet['logreg_result']}, CNN Prob: {tweet['cnn_prob']}, CNN Result: {tweet['cnn_result']})")
+                st.write(f"{tweet['text']}(Likes: {tweet['like']}, Retweets: {tweet['retweet']},Status: {tweet['safety_status']})")
                 if st.button(f'Like Tweet {tweet["id"]}', key=f'like_{tweet["id"]}'):
                     self.like_tweet(username, tweet["id"])
                     st.success('Tweet liked successfully')
