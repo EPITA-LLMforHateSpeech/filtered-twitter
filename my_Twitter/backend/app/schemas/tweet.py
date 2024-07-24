@@ -8,8 +8,8 @@ class TweetBase(BaseModel):
     likes: int
     retweets: int
     retweet_id: Optional[str] = None
-    linreg_prob: Optional[float] = None
-    linreg_result: Optional[int] = None
+    logreg_prob: Optional[float] = None
+    logreg_result: Optional[int] = None
     cnn_prob: Optional[float] = None
     cnn_result: Optional[int] = None
     admin_result: Optional[int] = None
