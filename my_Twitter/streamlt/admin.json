@@ -1,0 +1,11 @@
+{
+    "usernames": {
+        "admin": {
+            "email": "admin@example.com",
+            "name": "Admin User",
+            "password": "123",
+            "admin": true,
+            "tweets": []
+        }
+    }
+}
