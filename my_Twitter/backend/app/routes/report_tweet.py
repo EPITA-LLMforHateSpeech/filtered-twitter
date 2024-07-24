@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.database.db import SessionLocal
 from backend.database.models import Tweet as TweetModel, ReportTweetSchema, ReportedTweet as ReportedTweetModel
+import datetime
 
 router = APIRouter()
 
@@ -23,7 +24,9 @@ def report_tweet(report: ReportTweetSchema, db: Session = Depends(get_db)):
     # Save the report in the reported_tweets table
     reported_tweet = ReportedTweetModel(
         tweet_id=report.tweet_id,
-        user_id=report.user_id
+        user_id=report.user_id,
+        reported_at=datetime.datetime.now(datetime.timezone.utc),
+
     )
     db.add(reported_tweet)
     db.commit()

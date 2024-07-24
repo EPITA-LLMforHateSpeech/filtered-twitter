@@ -1,6 +1,7 @@
 import requests
 from backend.database.db import Tweet as TweetModel
 import logging
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,9 @@ def update_safety_status(base_url, tweet_id, new_safety_status, change_source):
     update_data = {
         "tweet_id": tweet_id,
         "new_safety_status": new_safety_status,
-        "change_source": change_source
+        "change_source": change_source,
+        "changed_at": datetime.now(timezone.utc).isoformat()  # Add current time
+
     }
     response = requests.post(f"{base_url}/update_safety_status", json=update_data)
     if response.status_code != 200:

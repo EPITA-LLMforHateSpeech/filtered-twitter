@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from backend.database.db import SessionLocal
 from backend.database.models import StoredTweet as StoredTweetModel, Tweet as TweetModel, UpdateSafetyStatus, SafetyStatusChange
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -42,7 +43,9 @@ def store_tweet(data: StoreTweetData, db: Session = Depends(get_db)):
         text=original_tweet.tweet,
         likes=original_tweet.likes,
         retweets=original_tweet.retweets,
-        safety_status=original_tweet.cnn_result
+        safety_status=original_tweet.cnn_result,
+        created_at=original_tweet.created_at  # Use the original tweet's created_at
+
     )
     db.add(stored_tweet)
     db.commit()
@@ -70,7 +73,9 @@ def update_safety_status(data: UpdateSafetyStatus, db: Session = Depends(get_db)
     safety_status_change = SafetyStatusChange(
         tweet_id=data.tweet_id,
         new_safety_status=data.new_safety_status,
-        change_source=data.change_source
+        change_source=data.change_source,
+        changed_at=data.changed_at or datetime.now(timezone.utc)  # Use provided updated_at or current time
+
     )
     db.add(safety_status_change)
     

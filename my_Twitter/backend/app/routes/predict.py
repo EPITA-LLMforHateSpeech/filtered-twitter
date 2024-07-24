@@ -10,7 +10,7 @@ import joblib
 from sqlalchemy.orm import Session
 import os
 import hashlib
-
+import datetime
 
 router = APIRouter()
 
@@ -82,7 +82,9 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
                 logreg_prob=logreg_prob,
                 logreg_result=int(logreg_pred),
                 cnn_prob=None,  # No CNN prediction for single requests
-                cnn_result=None
+                cnn_result=None,
+                created_at=datetime.datetime.now(datetime.timezone.utc),  # Use timezone-aware UTC datetime
+
             )
             db.add(tweet)
         
@@ -98,7 +100,9 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
             "logreg_prob": float(logreg_prob),  # Convert numpy.float32 to float
             "logreg_result": int(logreg_pred),
             "cnn_prob": None,
-            "cnn_result": None
+            "cnn_result": None,
+            "created_at": tweet.created_at.isoformat()  # Return the created_at timestamp
+          
         }
      
     elif isinstance(data, BatchTextData):
@@ -138,7 +142,8 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
                 "logreg_prob": float(tweet.logreg_prob),  # Convert numpy.float32 to float
                 "logreg_result": tweet.logreg_result,
                 "cnn_prob": cnn_prob,
-                "cnn_result": cnn_result
+                "cnn_result": cnn_result,
+                "created_at": tweet.created_at.isoformat()
             })
         
         return {"results": results}

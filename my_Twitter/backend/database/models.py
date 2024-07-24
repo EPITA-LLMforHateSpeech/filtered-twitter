@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, Text, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, Text, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from typing import Optional
 from pydantic import BaseModel
+from datetime import datetime, timezone
 
 DATABASE_URL = "sqlite:///./filtered_tweets.db"
 
@@ -28,6 +29,7 @@ class Tweet(Base):
     cnn_prob = Column(Float, nullable=True)
     cnn_result = Column(Integer, nullable=True)
     admin_result = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))  # Timestamp for when the tweet was created
 
 
 class StoredTweet(Base):
@@ -42,6 +44,7 @@ class StoredTweet(Base):
     likes = Column(Integer, default=0)
     retweets = Column(Integer, default=0)
     safety_status = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))  # Timestamp for when the tweet was stored
 
 class ReportedTweet(Base):
     __tablename__ = "reported_tweets"
@@ -49,6 +52,7 @@ class ReportedTweet(Base):
     id = Column(Integer, primary_key=True, index=True)
     tweet_id = Column(String, ForeignKey('tweets.tweet_id'), nullable=False)
     user_id = Column(String, nullable=False)
+    reported_at = Column(DateTime, default=datetime.now(timezone.utc))  # Timestamp for when the safety status was changed
 
 
 class SafetyStatusChange(Base):
@@ -58,6 +62,7 @@ class SafetyStatusChange(Base):
     tweet_id = Column(String, ForeignKey('tweets.tweet_id'), nullable=False)
     new_safety_status = Column(Integer, nullable=False)
     change_source = Column(String, nullable=False)  # 'admin' or 'cnn'
+    changed_at = Column(DateTime, default=datetime.now(timezone.utc))  # Timestamp for when the safety status was changed
 
 Base.metadata.create_all(bind=engine)
 
@@ -75,6 +80,7 @@ class TweetSchema(BaseModel):
     cnn_prob: Optional[float] = None
     cnn_result: Optional[int] = None
     admin_result: Optional[int] = None
+    created_at: Optional[datetime] = None   # ISO format timestamp
 
     class Config:
         orm_mode = True
@@ -87,13 +93,25 @@ class StoreTweetSchema(BaseModel):
     likes: int = 0
     retweets: int = 0
     safety_status: Optional[int] = None
+    created_at: Optional[datetime] = None   # Include timestamp in the schema
+
+    class Config:
+        orm_mode = True
 
 class ReportTweetSchema(BaseModel):
     tweet_id: str
     user_id: str
     safety_status: int
+    reported_at: Optional[datetime] = None   # Include timestamp in the schema
+
+    class Config:
+        orm_mode = True
 
 class UpdateSafetyStatus(BaseModel):
     tweet_id: str
     new_safety_status: int
     change_source: str
+    changed_at: Optional[datetime] = None   # Include timestamp in the schema
+
+    class Config:
+        orm_mode = True
