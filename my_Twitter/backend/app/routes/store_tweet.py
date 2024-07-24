@@ -74,7 +74,7 @@ def update_safety_status(data: UpdateSafetyStatus, db: Session = Depends(get_db)
         tweet_id=data.tweet_id,
         new_safety_status=data.new_safety_status,
         change_source=data.change_source,
-        changed_at=data.changed_at or datetime.now(timezone.utc)  # Use provided updated_at or current time
+        changed_at=datetime.now(timezone.utc)  # Use provided changed_at or current time
 
     )
     db.add(safety_status_change)
