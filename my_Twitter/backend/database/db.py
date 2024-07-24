@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from backend.database.models import Base, Tweet  # Import the Tweet model
 
-DATABASE_URL = "sqlite:///./tweets.db"  # Update with your database URL
+DATABASE_URL = "sqlite:///./filtered_tweets.db"  # Update with your database URL
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

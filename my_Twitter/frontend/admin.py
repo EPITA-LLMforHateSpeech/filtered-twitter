@@ -1,5 +1,7 @@
 import streamlit as st
 import requests
+import pandas as pd
+
 
 BASE_URL = "http://localhost:8000"
 
@@ -113,3 +115,37 @@ def load_admin_page():
             st.write("---")
 
 ########################### add another tab for statistics 
+
+    st.title("Admin Dashboard")
+    
+    # Fetch all tweets
+    all_tweets = fetch_all_tweets()
+    tweets_df = pd.DataFrame(all_tweets)
+    
+    # Fetch all safety status changes
+    status_changes = fetch_safety_status_changes()
+    changes_df = pd.DataFrame(status_changes)
+    
+    # Display tweets over time
+    st.subheader("Tweets Over Time")
+    tweets_df['created_at'] = pd.to_datetime(tweets_df['created_at'])
+    tweets_time_chart = alt.Chart(tweets_df).mark_line().encode(
+        x='yearmonthdate(created_at):T',
+        y='count():Q'
+    ).properties(
+        width=800,
+        height=400
+    )
+    st.altair_chart(tweets_time_chart, use_container_width=True)
+    
+    # Display safety status changes over time
+    st.subheader("Safety Status Changes Over Time")
+    changes_df['changed_at'] = pd.to_datetime(changes_df['changed_at'])
+    status_changes_chart = alt.Chart(changes_df).mark_line().encode(
+        x='yearmonthdate(changed_at):T',
+        y='count():Q'
+    ).properties(
+        width=800,
+        height=400
+    )
+    st.altair_chart(status_changes_chart, use_container_width=True)
