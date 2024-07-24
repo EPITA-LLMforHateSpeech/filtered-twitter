@@ -42,3 +42,14 @@ def fetch_tweet(tweet_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Tweet not found")
     
     return tweet
+
+
+# Fetch tweets by username
+@router.get("/fetch_tweets_by_user/{username}", response_model=List[StoreTweetSchema])
+def fetch_tweets_by_user(username: str, db: Session = Depends(get_db)):
+    tweets = db.query(StoredTweetModel).filter(StoredTweetModel.user_id == username).all()
+    
+    if not tweets:
+        raise HTTPException(status_code=404, detail="No tweets found for the given username")
+    
+    return tweets
