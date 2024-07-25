@@ -50,7 +50,6 @@ def get_risky_tweets(db: Session = Depends(get_db)):
 
     return risky_tweets
 
-
 # @router.get("/unsafe_changes", response_model=List[SafetyStatusChange])
 # def get_unsafe_changes(change_source: str, db: Session = Depends(get_db)):
 #     if change_source not in ["cnn", "admin"]:
