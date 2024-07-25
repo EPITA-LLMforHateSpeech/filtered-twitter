@@ -117,7 +117,7 @@ class InteractionManager:
                             else: 
                                 st.error('User not logged in.')
                     with col3:
-                        retweet_text = st.text_area("Retweet")
+                        retweet_text = st.text_area("Retweet", key=f"retweet_text_area_{tweet["tweet_id"]}")
                         if st.button('Retweet', key=f'retweet_{tweet["tweet_id"] + str(i)}'):
                             if retweet_text:
                                 self.retweet_tweet(tweet["tweet_id"], user_id, retweet_text)

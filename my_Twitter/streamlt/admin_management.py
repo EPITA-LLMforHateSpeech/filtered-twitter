@@ -242,7 +242,7 @@ def admin_dashboard():
                             f"<small>Model's decision: <span style='color: #FF6347;'>{cnn_result_text}</span> with probability {cnn_prob:.2f}%</small>",
                             unsafe_allow_html=True
                         )
-                        if not is_blocked and not tweet.get('cnn_result', 0) == 1:
+                        if is_blocked and not tweet.get('cnn_result', 0) == 1:
 
                             col1, col2 = st.columns([1,1])
                             with col1:
