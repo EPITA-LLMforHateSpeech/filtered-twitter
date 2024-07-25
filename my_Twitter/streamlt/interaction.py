@@ -11,28 +11,33 @@ class InteractionManager:
     def __init__(self, user_manager):
         self.user_manager = user_manager
 
-    def like_tweet(self, tweet_id):
-        url = f"{self.BASE_URL}/like_tweet"
-        payload = {"tweet_id": tweet_id}
+    def like_tweet(self, tweet_id, user_id):
+        url = f"{self.BASE_URL}/like_tweet/{tweet_id}"
+        payload = {"user_id": user_id}
         response = requests.post(url, json=payload)
         
         if response.status_code == 200:
             st.success("Tweet liked successfully.")
+        elif response.status_code == 403:  # Forbidden if user is blocked
+            st.error(f"Failed to like tweet: User is blocked and cannot like.")
         else:
             st.error(f"Failed to like tweet: {response.status_code}")
             st.error(f"Response: {response.json()}")
+
  
-    def retweet_tweet(self, tweet_id):
-        url = f"{self.BASE_URL}/retweet_tweet"
-        payload = {"tweet_id": tweet_id}
+    def retweet_tweet(self, tweet_id, user_id, text):
+        url = f"{self.BASE_URL}/retweet/{tweet_id}"
+        payload = {"user_id": user_id, "text": text}
         response = requests.post(url, json=payload)
         
         if response.status_code == 200:
             st.success("Tweet retweeted successfully.")
+        elif response.status_code == 403:  # Forbidden if user is blocked
+            st.error(f"Failed to retweet tweet: User is blocked and cannot retweet.")
         else:
             st.error(f"Failed to retweet tweet: {response.status_code}")
             st.error(f"Response: {response.json()}")
-    
+        
 
     def report_tweet(self, tweet_id, user_id):
         report_data = {
@@ -96,18 +101,19 @@ class InteractionManager:
 
                 # Display action buttons for tweets not blocked by safety_status
                 if not is_blocked:
+                    user_id = self.user_manager.get_current_user_id() 
                     col1, col2, col3 = st.columns([1, 1, 1])
                     with col1:
                         if st.button('Like', key=f'like_{tweet["tweet_id"] + str(i)}'):
-                            self.like_tweet(tweet["tweet_id"])
+                            self.like_tweet(tweet["tweet_id"], user_id)
                     
                     with col2:
                         if st.button('Retweet', key=f'retweet_{tweet["tweet_id"] + str(i)}'):
-                            self.retweet_tweet(tweet["tweet_id"])
+                            self.retweet_tweet(tweet["tweet_id"], user_id, "some text")
                     
                     with col3:
                         if st.button('Report', key=f'report_{tweet["tweet_id"] + str(i)}'):
-                            user_id = self.user_manager.get_current_user_id() 
+                            
                             if user_id:
                                 self.report_tweet(tweet["tweet_id"], user_id)  # Use the current user's ID for reporting
                             else: 

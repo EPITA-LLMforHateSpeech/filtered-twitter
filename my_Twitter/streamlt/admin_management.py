@@ -277,7 +277,7 @@ def admin_dashboard():
                 elif time_span <= pd.Timedelta(hours=3):
                     resample_freq = '30min'
                 else:
-                    resample_freq = '1H'
+                    resample_freq = '1h'
 
                 # Resample data
                 total_tweets_over_time = df_with_time.resample(resample_freq).size()
@@ -404,6 +404,19 @@ def admin_dashboard():
     with tab5:
         # Admin functionalities section
         st.write("## Admin Functions")
+
+        # Block User
+        st.write("### Block User")
+        block_user_id = st.text_input("User ID to block")
+        if st.button("Block User"):
+            if block_user_id:
+                block_response = admin_manager.block_user(block_user_id)
+                if block_response:
+                    st.success(f"User {block_user_id} blocked successfully.")
+                else:
+                    st.error(f"Failed to block user {block_user_id}.")
+            else:
+                st.error("Please provide a User ID to block.")
 
         # Add User
         st.write("### Add User")

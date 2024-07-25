@@ -74,6 +74,12 @@ class UserTweetInteraction(Base):
     interaction_type = Column(String, nullable=False)  # 'like' or 'retweet'
     created_at = Column(DateTime, default=datetime.now, nullable=False)
 
+
+class BlockedUser(Base):
+    __tablename__ = 'blocked_users'
+    
+    user_id = Column(String, primary_key=True, index=True)
+
 Base.metadata.create_all(bind=engine)
 
 

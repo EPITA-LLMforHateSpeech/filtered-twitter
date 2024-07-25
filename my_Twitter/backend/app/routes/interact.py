@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from backend.database.db import SessionLocal
-from backend.database.models import Tweet as TweetModel, StoredTweet, UserTweetInteraction
+from backend.database.models import Tweet as TweetModel, StoredTweet, UserTweetInteraction, BlockedUser
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
@@ -47,7 +47,11 @@ def generate_tweet_id(text: str, user:str) -> str:
 @router.post("/like_tweet/{tweet_id}")
 def like_tweet(tweet_id: str, request: LikeRequest, db: Session = Depends(get_db)):
     user_id = request.user_id
-    
+        
+    # Check if the user is blocked
+    if db.query(BlockedUser).filter(BlockedUser.user_id == user_id).first():
+        raise HTTPException(status_code=403, detail="User is blocked and cannot like tweets")
+
     # Find the tweet in both tables
     tweet = db.query(TweetModel).filter(TweetModel.tweet_id == tweet_id).first()
     stored_tweet = db.query(StoredTweet).filter(StoredTweet.tweet_id == tweet_id).first()
@@ -77,6 +81,10 @@ def like_tweet(tweet_id: str, request: LikeRequest, db: Session = Depends(get_db
 def retweet(tweet_id: str, request: RetweetRequest, db: Session = Depends(get_db)):
     user_id = request.user_id
     text = request.text
+    
+    # Check if the user is blocked
+    if db.query(BlockedUser).filter(BlockedUser.user_id == user_id).first():
+        raise HTTPException(status_code=403, detail="User is blocked and cannot retweet")
 
     # Find the original tweet
     original_tweet = db.query(TweetModel).filter(TweetModel.tweet_id == tweet_id).first()
@@ -96,7 +104,7 @@ def retweet(tweet_id: str, request: RetweetRequest, db: Session = Depends(get_db
     prediction = post_tweet_for_prediction(text, user_id)
     
     if prediction["logreg_result"] != 1:
-        created_at=datetime.datetime.now(datetime.timezone.utc),  # Use timezone-aware UTC datetime
+        created_at = datetime.datetime.now(datetime.timezone.utc)  # Use timezone-aware UTC datetime
 
         store_response = store_posted_tweet(
             tweet_id=prediction["tweet_id"],
@@ -106,7 +114,7 @@ def retweet(tweet_id: str, request: RetweetRequest, db: Session = Depends(get_db
             likes=0,
             retweets=0,
             safety_status=None,  # Initial safety status is None
-            created_at=created_at
+            created_at=created_at.isoformat()  # Convert datetime to ISO format string
         )
         print("Store Tweet Response:", store_response)
 
@@ -138,5 +146,10 @@ def store_posted_tweet(tweet_id, retweet_id, user_id, text, likes, retweets, saf
         "safety_status": safety_status,
         "created_at": created_at
     }
-    response = requests.post(f'{base_url}/store_tweet', json=data)
-    return response.json()
+    try:
+        response = requests.post(f'{base_url}/store_tweet', json=data)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error storing posted tweet: {e}")
+        return {"error": str(e)}

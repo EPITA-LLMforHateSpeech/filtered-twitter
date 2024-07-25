@@ -53,3 +53,7 @@ def fetch_tweets_by_user(username: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No tweets found for the given username")
     
     return tweets
+
+
+################################
+
