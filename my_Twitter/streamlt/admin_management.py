@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import time
+from io import BytesIO
 
 
 BASE_URL = "http://localhost:8000"
@@ -154,16 +155,18 @@ def admin_dashboard():
                             unsafe_allow_html=True
                         )
 
-                        col1, col2 = st.columns([1,1])
-                        with col1:
-                            if st.button('Mark as Safe', key=f"user_safe_{tweet['tweet_id'] + str(i)}"):
-                                response = update_safety_status(tweet['tweet_id'], 0, 'admin')
-                                st.write(response.get("message", "No message found"))
-                            
-                        with col2:
-                            if st.button('Mark as Unsafe', key=f"user_unsafe_{tweet['tweet_id'] + str(i)}"):
-                                response = update_safety_status(tweet['tweet_id'], 1, 'admin')
-                                st.write(response.get("message", "No message found"))
+                        if not is_blocked and not tweet.get('cnn_result', 0) == 1:
+
+                            col1, col2 = st.columns([1,1])
+                            with col1:
+                                if st.button('Mark as Safe', key=f"user_safe_{tweet['tweet_id'] + str(i)}"):
+                                    response = update_safety_status(tweet['tweet_id'], 0, 'admin')
+                                    st.write(response.get("message", "No message found"))
+                                
+                            with col2:
+                                if st.button('Mark as Unsafe', key=f"user_unsafe_{tweet['tweet_id'] + str(i)}"):
+                                    response = update_safety_status(tweet['tweet_id'], 1, 'admin')
+                                    st.write(response.get("message", "No message found"))
 
                         st.write(f"Reported By: {report.get('user_id', 'Not available')}")
                         st.write("---")
@@ -186,17 +189,18 @@ def admin_dashboard():
                             f"<small>Model's decision: <span style='color: #FF6347;'>{cnn_result_text}</span> with probability {cnn_prob:.2f}%</small>",
                             unsafe_allow_html=True
                         )
+                        if not is_blocked and not tweet.get('cnn_result', 0) == 1:
 
-                        col1, col2 = st.columns([1,1])
-                        with col1:
-                            if st.button('Mark as Safe', key=f"risky_safe_{tweet['tweet_id'] + str(i)}"):
-                                response = update_safety_status(tweet['tweet_id'], 0, 'admin')
-                                st.write(response.get("message", "No message found"))
-                            
-                        with col2:
-                            if st.button('Mark as Unsafe', key=f"risky_unsafe_{tweet['tweet_id'] + str(i)}"):
-                                response = update_safety_status(tweet['tweet_id'], 1, 'admin')
-                                st.write(response.get("message", "No message found"))
+                            col1, col2 = st.columns([1,1])
+                            with col1:
+                                if st.button('Mark as Safe', key=f"risky_safe_{tweet['tweet_id'] + str(i)}"):
+                                    response = update_safety_status(tweet['tweet_id'], 0, 'admin')
+                                    st.write(response.get("message", "No message found"))
+                                
+                            with col2:
+                                if st.button('Mark as Unsafe', key=f"risky_unsafe_{tweet['tweet_id'] + str(i)}"):
+                                    response = update_safety_status(tweet['tweet_id'], 1, 'admin')
+                                    st.write(response.get("message", "No message found"))
                         # st.markdown(f"<small>Logreg Prob: {tweet.get('logreg_prob', 'Not available')} | Logreg Result: {tweet.get('logreg_result', 'Not available')} | CNN Prob: {tweet.get('cnn_prob', 'Not available')} | CNN Result: {tweet.get('cnn_result', 'Not available')}</small>", unsafe_allow_html=True)
                         st.write("---")
                         i+=1
@@ -250,6 +254,7 @@ def admin_dashboard():
             tweets_data = fetch_all_tweets()
             if tweets_data:
                 # Convert to DataFrame
+                # Graph: Number of Tweets Over Time
                 df = pd.DataFrame(tweets_data)
 
                 # Convert 'created_at' to datetime
@@ -257,23 +262,40 @@ def admin_dashboard():
 
                 # Filter unsafe tweets (those flagged by CNN or admin)
                 unsafe_tweets = df[(df['cnn_result'] == 1) | (df['admin_result'] == 1)]
-                
+
                 # Set 'created_at' as index for resampling
                 df_with_time = df.set_index('created_at')
                 unsafe_tweets.set_index('created_at', inplace=True)
 
-                total_tweets_over_time = df_with_time.resample('1H').size()
-                unsafe_tweets_over_time = unsafe_tweets.resample('1H').size()
+                # Determine the time span of the data
+                time_span = df_with_time.index.max() - df_with_time.index.min()
+                print("Time span: ", time_span)
+                
+                # Set dynamic resampling frequency
+                if time_span <= pd.Timedelta(hours=1):
+                    resample_freq = '3min'
+                elif time_span <= pd.Timedelta(hours=3):
+                    resample_freq = '30min'
+                else:
+                    resample_freq = '1H'
 
-                # Plot the number of unsafe tweets over time
-                fig, ax = plt.subplots()
-                total_tweets_over_time.plot(ax=ax, linestyle='-', label='Total Tweets')
-                unsafe_tweets_over_time.plot(ax=ax, label='Unsafe Tweets', marker='o')
-                ax.set_title('Number of Unsafe Tweets Over Time')
-                ax.set_xlabel('Date')
-                ax.set_ylabel('Number of Unsafe Tweets')
+                # Resample data
+                total_tweets_over_time = df_with_time.resample(resample_freq).size()
+                unsafe_tweets_over_time = unsafe_tweets.resample(resample_freq).size()
+
+                # Plot the number of total and unsafe tweets over time
+                fig, ax = plt.subplots(figsize=(12, 6))  # Specify figure size
+                total_tweets_over_time.plot(ax=ax, label='Total Tweets', linestyle='--')
+                unsafe_tweets_over_time.plot(ax=ax, label='Unsafe Tweets', marker='o', linestyle='-')
+
+                ax.set_title('Number of Tweets Over Time')
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Number of Tweets')
                 ax.legend()
                 ax.grid(True)
+
+                # Rotate x-axis labels for better readability
+                plt.xticks(rotation=45)
 
                 # Display plot in Streamlit
                 st.pyplot(fig)
@@ -289,8 +311,8 @@ def admin_dashboard():
                 cnn_changes = changes_df[changes_df['change_source'] == 'cnn']
                 admin_changes = changes_df[changes_df['change_source'] == 'admin']
                 # Resample and plot
-                cnn_unsafe_changes = cnn_changes.resample('1H', on='changed_at').size()
-                admin_unsafe_changes = admin_changes.resample('1H', on='changed_at').size()
+                cnn_unsafe_changes = cnn_changes.resample('2min', on='changed_at').size()
+                admin_unsafe_changes = admin_changes.resample('2min', on='changed_at').size()
 
                 fig, ax = plt.subplots()
                 cnn_unsafe_changes.plot(ax=ax, label='CNN Unsafe Tweets')
@@ -310,6 +332,70 @@ def admin_dashboard():
                 ax.set_ylabel('Frequency')
                 st.pyplot(fig)
 
+
+                # Graph 4: User behavior
+
+                # Convert to DataFrame
+                df = pd.DataFrame(tweets_data)
+                # Convert 'created_at' to datetime
+                df['created_at'] = pd.to_datetime(df['created_at'])
+
+                # Filter hate speech tweets
+                blocked_realtime = df[df['logreg_result'] == 1]
+                blocked_by_model = df[df['cnn_result'] == 1]
+                blocked_by_admin = df[df['admin_result'] == 1]
+
+                # Group by user and count tweets
+                blocked_realtime_counts = blocked_realtime.groupby('user').size().sort_values(ascending=False)
+                blocked_by_model_counts = blocked_by_model.groupby('user').size().sort_values(ascending=False)
+                blocked_by_admin_counts = blocked_by_admin.groupby('user').size().sort_values(ascending=False)
+                
+                # Get top users
+                top_users = list(set(blocked_realtime_counts.index) |
+                                set(blocked_by_model_counts.index) |
+                                set(blocked_by_admin_counts.index))
+
+                # Create a DataFrame for the top users
+                top_users_df = pd.DataFrame({
+                    'user': top_users
+                }).set_index('user')
+
+                # Add counts to the DataFrame
+                top_users_df['Blocked in Real-time'] = top_users_df.index.map(blocked_realtime_counts).fillna(0)
+                top_users_df['Blocked by Model'] = top_users_df.index.map(blocked_by_model_counts).fillna(0)
+                top_users_df['Blocked by Admin'] = top_users_df.index.map(blocked_by_admin_counts).fillna(0)
+
+                # Calculate total counts
+                top_users_df['Total'] = top_users_df.sum(axis=1)
+                
+                # Sort by total counts
+                top_users_df = top_users_df.sort_values(by='Total', ascending=False)
+                
+                # Drop the 'Total' column as we don't need it in the graph
+                top_users_df.drop(columns=['Total'], inplace=True)
+
+                st.write("#### Users with unsafe behavior")
+
+                # Create tabs in Streamlit
+                tab1, tab2, tab3 = st.tabs(["Blocked in Real-time", "Marked by Model", "Marked by Admin"])
+
+                # Tab 1: Blocked in Real-time
+                with tab1:
+                    st.write('##### Blocked in Real-time')
+                    buf = plot_grouped_bar_chart(top_users_df[['Blocked in Real-time']], 'Blocked in Real-time')
+                    st.image(buf)
+
+                # Tab 2: Blocked by Model
+                with tab2:
+                    st.header('Marked by Model')
+                    buf = plot_grouped_bar_chart(top_users_df[['Blocked by Model']], 'Marked by Model')
+                    st.image(buf)
+
+                # Tab 3: Blocked by Admin
+                with tab3:
+                    st.header('Marked by Admin')
+                    buf = plot_grouped_bar_chart(top_users_df[['Blocked by Admin']], 'Marked by Admin')
+                    st.image(buf)
             else:
                 st.write("No data available for generating statistics.")
                 print("Found no data.")
@@ -352,3 +438,24 @@ def admin_dashboard():
                 st.success(f"User {del_username} deleted successfully.")
             else:
                 st.error("Please provide a username to delete.")
+
+# Function to plot the grouped bar chart
+def plot_grouped_bar_chart(df, title):
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Plot bars
+    df.plot(kind='bar', ax=ax)
+    
+    # Set titles and labels
+    ax.set_title(title)
+    ax.set_xlabel('Users')
+    ax.set_ylabel('Number of Hate Speech Tweets')
+    ax.grid(True)
+    plt.xticks(rotation=0)
+    
+    # Save plot to a BytesIO object
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    buf.seek(0)
+    
+    return buf

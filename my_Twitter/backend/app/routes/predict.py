@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 import os
 import hashlib
 import datetime
+import random
+
 
 router = APIRouter()
 
@@ -44,11 +46,16 @@ def get_db():
         db.close() # Dependency for total tweets
 
 
-def generate_tweet_id(text: str) -> str:
-    sha256_hash = hashlib.sha256(text.encode()).hexdigest() # Create a SHA-256 hash of the text
-    tweet_id = sha256_hash[:8] # Take the first 8 characters of the hash (32 bits)
+def generate_tweet_id(text: str, user:str) -> str:
+    random_int = str(random.randint(0, 1_000_000))
+    
+    # Combine text, user, and random integer into one string
+    combined_string = text + user + random_int
+    
+    # Create a hash from the combined string
+    tweet_id = hashlib.sha256(combined_string.encode()).hexdigest()
+    
     return tweet_id
-
 
 @router.post("/predict")
 def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(get_db)):
@@ -62,7 +69,7 @@ def predict(data: Union[SingleTextData, BatchTextData], db: Session = Depends(ge
         logreg_prob = logreg_model.predict_proba(X_tfidf)[0][1] # Extract probability of being 1
 
         # Generate unique tweet_id based on text content
-        tweet_id = generate_tweet_id(data.text)
+        tweet_id = generate_tweet_id(data.text, data.user)
 
         # Attempt to find an existing tweet
         tweet = db.query(TweetModel).filter(TweetModel.tweet_id == tweet_id).first()
