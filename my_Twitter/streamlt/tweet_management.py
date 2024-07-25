@@ -1,6 +1,9 @@
 import streamlit as st
 from user_management import UserManager
 import requests
+from datetime import datetime, timezone
+
+
 class TweetManager:
 
     BASE_URL = "http://localhost:8000"
@@ -9,25 +12,59 @@ class TweetManager:
     def __init__(self, user_manager):
         self.user_manager = user_manager
 
-    def create_tweet(self, username, tweet_text):
-        users = self.user_manager.load_users()
-        tweet_id = len(users[username]["tweets"])
-        users[username]["tweets"].append({"id": tweet_id, "text": tweet_text, "likes": 0, "retweets": 0, "safety_status": "pending"})
-        self.user_manager.save_users(users)
+    def post_tweet_for_prediction(self, tweet, user):
+        response = requests.post(f'{self.BASE_URL}/predict', json={"text": tweet, "user": user})
+        return response.json()
 
-    def delete_tweet(self, username, tweet_id):
-        users = self.user_manager.load_users()
-        users[username]["tweets"] = [tweet for tweet in users[username]["tweets"] if tweet["id"] != tweet_id]
-        self.user_manager.save_users(users)
+    def store_posted_tweet(self, tweet_id, retweet_id, user_id, text, likes, retweets, safety_status, created_at):
+        data = {
+            "tweet_id": tweet_id,
+            "retweet_id": retweet_id,
+            "user_id": user_id,
+            "text": text,
+            "likes": likes,
+            "retweets": retweets,
+            "safety_status": safety_status,
+            "created_at": created_at
+        }
+        response = requests.post(f'{self.BASE_URL}/store_tweet', json=data)
+        return response.json()
+    
+    def create_tweet(self, text):
+        user_id = self.user_manager.get_current_user_id()
+        if not user_id:
+            raise ValueError("User ID is required to create a tweet.")
+        
+        # Post tweet for prediction
+        prediction = self.post_tweet_for_prediction(text, user_id)
+        print("Prediction Result:", prediction)
 
-    def update_tweet(self, username, tweet_id, new_text):
-        users = self.user_manager.load_users()
-        for tweet in users[username]["tweets"]:
-            if tweet["id"] == tweet_id:
-                tweet["text"] = new_text
-                tweet["safety_status"] = "pending"
-                self.user_manager.save_users(users)
-                break
+        # Check if the tweet is flagged as hate speech
+        if prediction.get("logreg_result") == 0:
+            created_at = datetime.now(timezone.utc).isoformat()  # Convert datetime to ISO format string
+
+            # Store the posted tweet
+            store_response = self.store_posted_tweet(
+                tweet_id=prediction.get("tweet_id"),
+                retweet_id=None,
+                user_id=user_id,
+                text=prediction.get("tweet"),
+                likes=prediction.get("likes"),
+                retweets=prediction.get("retweets"),
+                safety_status=None,  # Initial safety status is None
+                created_at=created_at
+            )
+            print("Store Tweet Response:", store_response)
+            return {"success": f"Tweet passed hate speech check, stored under tweet id {store_response.get('tweet_id')}"}
+        else:
+            st.error("Tweet is flagged as hate speech and cannot be posted.")
+            return {"error": "Tweet is flagged as hate speech and cannot be posted."}
+
+    def delete_tweet(self, tweet_id):
+        pass
+
+    def update_tweet(self, tweet_id, new_text):
+        pass
 
     def display_tweets(self):
         user_id = self.user_manager.get_current_user_id()  # Retrieve the current user ID

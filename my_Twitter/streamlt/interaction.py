@@ -34,10 +34,13 @@ class InteractionManager:
             st.success("Tweet retweeted successfully.")
         elif response.status_code == 403:  # Forbidden if user is blocked
             st.error(f"Failed to retweet tweet: User is blocked and cannot retweet.")
+        elif response.status_code == 402:  # Forbidden if user is blocked
+            st.error(f"Failed to retweet tweet: Tweet was flagged as hatespeech and not stored.")
         else:
             st.error(f"Failed to retweet tweet: {response.status_code}")
             st.error(f"Response: {response.json()}")
         
+        return response
 
     def report_tweet(self, tweet_id, user_id):
         report_data = {
@@ -106,18 +109,22 @@ class InteractionManager:
                     with col1:
                         if st.button('Like', key=f'like_{tweet["tweet_id"] + str(i)}'):
                             self.like_tweet(tweet["tweet_id"], user_id)
-                    
                     with col2:
-                        if st.button('Retweet', key=f'retweet_{tweet["tweet_id"] + str(i)}'):
-                            self.retweet_tweet(tweet["tweet_id"], user_id, "some text")
-                    
-                    with col3:
                         if st.button('Report', key=f'report_{tweet["tweet_id"] + str(i)}'):
                             
                             if user_id:
                                 self.report_tweet(tweet["tweet_id"], user_id)  # Use the current user's ID for reporting
                             else: 
                                 st.error('User not logged in.')
+                    with col3:
+                        retweet_text = st.text_area("Retweet")
+                        if st.button('Retweet', key=f'retweet_{tweet["tweet_id"] + str(i)}'):
+                            if retweet_text:
+                                self.retweet_tweet(tweet["tweet_id"], user_id, retweet_text)
+                            else:
+                                st.error('Please enter text to retweet.')
+                    
+
                 st.write("---")
 
             i += 1

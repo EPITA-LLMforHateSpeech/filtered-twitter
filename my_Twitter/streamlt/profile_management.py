@@ -4,32 +4,40 @@ from user_management import UserManager
 class ProfileManager:
     def __init__(self, user_manager):
         self.user_manager = user_manager
- 
+        
     def update_profile(self, username, new_name):
         # Load user data
         users = self.user_manager.load_users()
+        # Debug: print the loaded users
+        print("Loaded Users:", users)
         # Update the profile name
         if username in users['usernames']:
             users['usernames'][username]['name'] = new_name
+            # Debug: print the updated user data
+            print(f"Updated User Data for {username}:", users['usernames'][username])
             self.user_manager.save_users(users)
             return True
         return False
- 
+
     def display_profile(self, username):
         # Load user data
         users = self.user_manager.load_users()
+        # Debug: print the loaded users
+        print("Loaded Users for Display:", users)
         if username in users['usernames']:
             user_data = users['usernames'][username]
             # Display the profile
             st.write(f"**Username:** {username}")
             st.write(f"**Name:** {user_data['name']}")
             st.write(f"**Email:** {user_data['email']}")
- 
+
             # Update profile section
             new_name = st.text_input('New Name', value=user_data['name'])
             if st.button('Change Name'):
                 if self.update_profile(username, new_name):
                     st.success('Name updated successfully')
+                    # Reload user data to reflect changes
+                    users = self.user_manager.load_users()
                 else:
                     st.error('Failed to update profile')
  

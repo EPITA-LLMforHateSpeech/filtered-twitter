@@ -128,8 +128,8 @@ def retweet(tweet_id: str, request: RetweetRequest, db: Session = Depends(get_db
         db.commit()
         
         return {"message": "Tweet retweeted successfully", "new_tweet_id": prediction["tweet_id"]}
-
-    return {"message": "Tweet was flagged by logistic regression and not stored"}
+    else:
+        raise HTTPException(status_code=402, detail="Tweet was flagged by logistic regression and not stored")
 
 def post_tweet_for_prediction(tweet, user):
     response = requests.post(f'{base_url}/predict', json={"text": tweet, "user": user})

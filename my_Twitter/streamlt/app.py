@@ -111,6 +111,18 @@ if all_users:
         if choice == "Home":
             if not is_admin:
                 st.subheader("Home")
+                
+                # Create a new tweet
+                st.write("Create a new Tweet:")
+                new_tweet = st.text_area("Tweet")
+                if st.button("Post Tweet"):
+                    if new_tweet.strip():  # Ensure the tweet is not empty
+                        tweet_manager = TweetManager(user_manager)
+                        tweet_manager.create_tweet(new_tweet)
+                    else:
+                        st.error("Tweet cannot be empty.")
+                
+                # Display existing tweets and interactions
                 interaction_manager = InteractionManager(user_manager)
                 interaction_manager.view_tweets()
             else:
