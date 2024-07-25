@@ -43,9 +43,21 @@ def get_risky_tweets(db: Session = Depends(get_db)):
     """
     Get tweets with a CNN probability between 30% and 50%.
     """
-    risky_tweets = db.query(TweetModel).filter(TweetModel.cnn_prob.between(0.30, 1)).all()
+    risky_tweets = db.query(TweetModel).filter(TweetModel.cnn_prob.between(0.30, 0.50)).all()
     
     if not risky_tweets:
         raise HTTPException(status_code=404, detail="No risky tweets found")
 
     return risky_tweets
+
+
+# @router.get("/unsafe_changes", response_model=List[SafetyStatusChange])
+# def get_unsafe_changes(change_source: str, db: Session = Depends(get_db)):
+#     if change_source not in ["cnn", "admin"]:
+#         raise HTTPException(status_code=400, detail="Invalid change source")
+    
+#     changes = db.query(SafetyStatusChange).filter(
+#         SafetyStatusChange.change_source == change_source
+#     ).all()
+    
+#     return changes

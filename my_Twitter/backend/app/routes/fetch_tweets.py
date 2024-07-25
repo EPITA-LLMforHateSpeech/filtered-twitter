@@ -34,9 +34,9 @@ def display_tweets(db: Session = Depends(get_db)):
     return tweets
 
 # Fetch tweet by ID
-@router.get("/fetch_tweet/{tweet_id}", response_model=StoreTweetSchema)
+@router.get("/fetch_tweet/{tweet_id}", response_model=TweetSchema)
 def fetch_tweet(tweet_id: str, db: Session = Depends(get_db)):
-    tweet = db.query(StoredTweetModel).filter(StoredTweetModel.tweet_id == tweet_id).first()
+    tweet = db.query(TweetModel).filter(TweetModel.tweet_id == tweet_id).first()
     
     if not tweet:
         raise HTTPException(status_code=404, detail="Tweet not found")
