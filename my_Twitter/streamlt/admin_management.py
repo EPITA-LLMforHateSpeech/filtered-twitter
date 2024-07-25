@@ -131,6 +131,7 @@ def admin_dashboard():
         with st.spinner("Loading tweets..."):
             all_tweets = fetch_all_tweets()  # Call your function to fetch tweets
         i = 0
+
         
         for tweet in all_tweets:
             # Display username in small text
@@ -242,7 +243,8 @@ def admin_dashboard():
                             f"<small>Model's decision: <span style='color: #FF6347;'>{cnn_result_text}</span> with probability {cnn_prob:.2f}%</small>",
                             unsafe_allow_html=True
                         )
-                        if is_blocked and not tweet.get('cnn_result', 0) == 1:
+
+                        if not is_blocked and not tweet.get('cnn_result', 0) == 1:
 
                             col1, col2 = st.columns([1,1])
                             with col1:
@@ -299,7 +301,7 @@ def admin_dashboard():
                     st.write("---")
             else:
                 st.write("No unsafe tweets marked by the admin found.")
-    
+
     with tab4:
         st.write("### Statistics Tweets")
         st.write("Statistics will be displayed here.")
@@ -323,6 +325,7 @@ def admin_dashboard():
 
                 # Determine the time span of the data
                 time_span = df_with_time.index.max() - df_with_time.index.min()
+
                 
                 # Set dynamic resampling frequency
                 if time_span <= pd.Timedelta(hours=1):
@@ -340,6 +343,7 @@ def admin_dashboard():
                 fig, ax = plt.subplots(figsize=(12, 6))  # Specify figure size
                 total_tweets_over_time.plot(ax=ax, label='Total Tweets', linestyle='--')
                 unsafe_tweets_over_time.plot(ax=ax, label='Unsafe Tweets', marker='o', linestyle='-')
+
 
                 ax.set_title('Number of Tweets Over Time')
                 ax.set_xlabel('Time')
@@ -514,6 +518,7 @@ def admin_dashboard():
         #         st.success(f"User {del_username} deleted successfully.")
         #     else:
         #         st.error("Please provide a username to delete.")
+
 
 # Function to plot the grouped bar chart
 def plot_grouped_bar_chart(df, title):

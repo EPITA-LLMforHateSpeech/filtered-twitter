@@ -12,6 +12,7 @@ import os
 users = {}
 admins = {}
 
+
 def load_json_file(filename):
     # Get the directory of the current script
     directory = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +48,7 @@ if all_users:
     print("All users data combined successfully.")
 else:
     print("Failed to combine user and admin data.")
+
 
 # Print combined data for verification
 # print("Combined Users Data:", all_users)
@@ -131,6 +133,7 @@ if all_users:
         elif choice == "Profile":
             if not is_admin:
                 st.subheader("Profile")
+
                 profile_manager = ProfileManager(user_manager)
                 profile_manager.display_profile(username)
             else:
@@ -141,6 +144,7 @@ if all_users:
                 tweet_management = TweetManager(user_manager)
                 st.subheader("Your Tweets")
                 tweet_management.display_tweets()
+
             else:
                 st.error('Only users have access to this page.')
 
