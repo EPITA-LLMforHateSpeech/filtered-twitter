@@ -4,33 +4,13 @@ import streamlit_authenticator as stauth
 from interaction import InteractionManager
 from profile_management import ProfileManager
 from user_management import UserManager
-import tweet_management
+from tweet_management import TweetManager
 import admin_management
 import os
 
 # Load user data
 users = {}
 admins = {}
-
-# try:
-#     with open('user.json') as f:
-#         users = json.load(f)
-# except json.JSONDecodeError as e:
-#     st.error(f"Error reading user JSON file: {e}")
-# except FileNotFoundError as e:
-#     st.error(f"User JSON file not found: {e}")
-# except Exception as e:
-#     st.error(f"An unexpected error occurred: {e}")
-
-# try:
-#     with open('admin.json') as f:
-#         admins = json.load(f)
-# except json.JSONDecodeError as e:
-#     st.error(f"Error reading admin JSON file: {e}")
-# except FileNotFoundError as e:
-#     st.error(f"Admin JSON file not found: {e}")
-# except Exception as e:
-#     st.error(f"An unexpected error occurred: {e}")
 
 def load_json_file(filename):
     # Get the directory of the current script
@@ -88,8 +68,8 @@ if all_users:
         }
     }
 
-     
-    interaction_manager = InteractionManager()  # Initialize the interaction manager
+
+    # interaction_manager = InteractionManager()  # Initialize the interaction manager
 
     # Initialize the authenticator
     authenticator = stauth.Authenticate(
@@ -103,6 +83,10 @@ if all_users:
     name, authentication_status, username = authenticator.login()
 
     if authentication_status:
+
+        user_manager = UserManager()  # Initialize UserManager
+        user_manager.set_current_user(username)
+
         st.sidebar.title(f"Welcome {name}")
         authenticator.logout("Logout", "sidebar")
 
@@ -122,17 +106,19 @@ if all_users:
 
     
         choice = st.sidebar.selectbox("Menu", menu)
+        
 
         if choice == "Home":
             if not is_admin:
                 st.subheader("Home")
-                interaction_manager.view_tweets(username)
+                interaction_manager = InteractionManager(user_manager)
+                interaction_manager.view_tweets()
             else:
                 st.error('Only users have access to this page.')
+
         elif choice == "Profile":
             if not is_admin:
                 st.subheader("Profile")
-                user_manager = UserManager()  # Replace with your actual UserManager instance
                 profile_manager = ProfileManager(user_manager)
                 profile_manager.display_profile(username)
             else:
@@ -140,8 +126,9 @@ if all_users:
 
         elif choice == "Tweets":
             if not is_admin:
+                tweet_management = TweetManager(user_manager)
                 st.subheader("Your Tweets")
-                tweet_management.display_tweets(username)
+                tweet_management.display_tweets()
             else:
                 st.error('Only users have access to this page.')
 

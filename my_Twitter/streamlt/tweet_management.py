@@ -1,9 +1,13 @@
 import streamlit as st
 from user_management import UserManager
-
+import requests
 class TweetManager:
-    def __init__(self):
-        self.user_manager = UserManager()
+
+    BASE_URL = "http://localhost:8000"
+
+
+    def __init__(self, user_manager):
+        self.user_manager = user_manager
 
     def create_tweet(self, username, tweet_text):
         users = self.user_manager.load_users()
@@ -25,16 +29,56 @@ class TweetManager:
                 self.user_manager.save_users(users)
                 break
 
-    def display_tweets(self, username):
-        users = self.user_manager.load_users()
-        if username in users:
-            st.write(f"Tweets by {username}:")
-            for tweet in users[username]["tweets"]:
-                st.write(f"{tweet['text']} (Likes: {tweet['likes']}, Retweets: {tweet['retweets']}, Status: {tweet['safety_status']})")
-                new_text = st.text_input(f'New Text for Tweet {tweet["id"]}')
-                if st.button(f'Update Tweet {tweet["id"]}'):
-                    self.update_tweet(username, tweet["id"], new_text)
+    def display_tweets(self):
+        user_id = self.user_manager.get_current_user_id()  # Retrieve the current user ID
+
+        if not user_id:
+            st.error("User ID not found.")
+            return
+        
+        st.write(f"Tweets by {user_id}:")
+
+        # Fetch tweets for the current user
+        tweets = self.fetch_tweets_by_user(user_id)
+
+        if not tweets:
+            st.error("Failed to fetch tweets or no tweets found.")
+            return
+
+        for tweet in tweets:
+            st.write(f"{tweet['text']} (Likes: {tweet['likes']}, Retweets: {tweet['retweets']}, Status: {tweet['safety_status']})")
+            
+            new_text = st.text_input(f'New Text for Tweet {tweet["tweet_id"]}', value=tweet['text'])
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                if st.button(f'Update Tweet', key=f'update_{tweet["tweet_id"]}'):
+                    self.update_tweet(user_id, tweet["tweet_id"], new_text)
                     st.success('Tweet updated successfully')
-                if st.button(f'Delete Tweet {tweet["id"]}'):
-                    self.delete_tweet(username, tweet["id"])
+            
+            with col2:
+                if st.button(f'Delete Tweet', key=f'delete_{tweet["tweet_id"]}'):
+                    self.delete_tweet(user_id, tweet["tweet_id"])
                     st.success('Tweet deleted successfully')
+        
+        st.write("---")
+
+
+    def fetch_tweets_by_user(self, user_id):
+        url = f"{self.BASE_URL}/fetch_tweets_by_user/{user_id}"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Failed to fetch tweets: {response.status_code}")
+            st.error(f"Response: {response.json()}")
+            return None
+
+    def update_tweet(self, user_id, tweet_id, new_text):
+        # Implement the update tweet functionality
+        pass
+
+    def delete_tweet(self, user_id, tweet_id):
+        # Implement the delete tweet functionality
+        pass

@@ -2,7 +2,7 @@
 import logging
 from fastapi import FastAPI
 from apscheduler.schedulers.background import BackgroundScheduler
-from backend.app.routes import predict, health, store_tweet, report_tweet, fetch_tweets, tweets_query
+from backend.app.routes import predict, health, store_tweet, report_tweet, fetch_tweets, tweets_query, interact
 from backend.database.db import SessionLocal
 from backend.database.models import Tweet as TweetModel 
 from backend.app.utils.prediction_utils import request_batch_prediction, update_safety_status
@@ -16,6 +16,7 @@ app.include_router(store_tweet.router)
 app.include_router(report_tweet.router)
 app.include_router(fetch_tweets.router)
 app.include_router(tweets_query.router)
+app.include_router(interact.router)
 
 
 # Schedule will change to 30 minutes in production

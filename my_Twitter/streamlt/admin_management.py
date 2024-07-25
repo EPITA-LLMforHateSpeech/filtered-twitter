@@ -387,7 +387,7 @@ def admin_dashboard():
 
                 # Tab 2: Blocked by Model
                 with tab2:
-                    st.header('Marked by Model')
+                    st.write('##### Marked by Model')
                     buf = plot_grouped_bar_chart(top_users_df[['Blocked by Model']], 'Marked by Model')
                     st.image(buf)
 

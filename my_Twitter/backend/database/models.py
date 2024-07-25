@@ -64,6 +64,16 @@ class SafetyStatusChange(Base):
     change_source = Column(String, nullable=False)  # 'admin' or 'cnn'
     changed_at = Column(DateTime, default=datetime.now(timezone.utc))  # Timestamp for when the safety status was changed
 
+
+class UserTweetInteraction(Base):
+    __tablename__ = 'user_tweet_interactions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, nullable=False)
+    tweet_id = Column(String, nullable=False)
+    interaction_type = Column(String, nullable=False)  # 'like' or 'retweet'
+    created_at = Column(DateTime, default=datetime.now, nullable=False)
+
 Base.metadata.create_all(bind=engine)
 
 
