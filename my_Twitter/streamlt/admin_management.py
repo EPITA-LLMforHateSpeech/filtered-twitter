@@ -6,10 +6,37 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import time
 from io import BytesIO
+import json
+import os
 
 
 BASE_URL = "http://localhost:8000"
 
+# Function to load JSON files
+def load_json_file(filename):
+    directory = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(directory, filename)
+
+    if not os.path.exists(file_path):
+        st.error(f"{filename} not found in the directory.")
+        return None
+
+    with open(file_path, 'r') as file:
+        return json.load(file)
+
+users = load_json_file('user.json')
+
+# Combine user and admin data based on the structure
+
+all_users = {}
+if isinstance(users, dict):
+    if 'usernames' in users:
+        all_users.update(users['usernames'])
+    else:
+        st.error("No 'usernames' key found in users data.")
+
+if not all_users:
+    st.error("Failed to load user  data.")
 
 def fetch_all_tweets():
     response = requests.get(f"{BASE_URL}/fetch_tweets")
@@ -64,7 +91,33 @@ def fetch_admin_unsafe_tweets():
     else:
         return None
     
+def check_if_user_blocked(user_id):
+    url = f"{BASE_URL}/is_user_blocked/{user_id}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json().get("is_blocked", False)
+    else:
+        print(f"Failed to check block status: {response.status_code}")
+        return False
 
+def block_user(user_id):
+    url = f"{BASE_URL}/block_user/{user_id}"
+    response = requests.post(url)
+    if response.status_code == 200:
+        return True
+    else:
+        print(f"Failed to block user: {response.status_code}")
+        return False
+
+def unblock_user(user_id):
+    url = f"{BASE_URL}/unblock_user/{user_id}"
+    response = requests.delete(url)
+    if response.status_code == 200:
+        return True
+    else:
+        print(f"Failed to unblock user: {response.status_code}")
+        return False
+    
 def admin_dashboard():
     admin_manager = AdminManager()
 
@@ -73,11 +126,13 @@ def admin_dashboard():
     # Tabs for viewing different categories of tweets
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["All Tweets", "Pending Tweets", "Unsafe Tweets", "Statistics", "User management"])
 
-    with tab1:
+    with tab1: 
         st.write("### All Tweets")
         with st.spinner("Loading tweets..."):
             all_tweets = fetch_all_tweets()  # Call your function to fetch tweets
         i = 0
+
+        
         for tweet in all_tweets:
             # Display username in small text
             # Determine if the tweet should be blocked
@@ -188,6 +243,7 @@ def admin_dashboard():
                             f"<small>Model's decision: <span style='color: #FF6347;'>{cnn_result_text}</span> with probability {cnn_prob:.2f}%</small>",
                             unsafe_allow_html=True
                         )
+
                         if not is_blocked and not tweet.get('cnn_result', 0) == 1:
 
                             col1, col2 = st.columns([1,1])
@@ -245,6 +301,7 @@ def admin_dashboard():
                     st.write("---")
             else:
                 st.write("No unsafe tweets marked by the admin found.")
+
     with tab4:
         st.write("### Statistics Tweets")
         st.write("Statistics will be displayed here.")
@@ -268,7 +325,7 @@ def admin_dashboard():
 
                 # Determine the time span of the data
                 time_span = df_with_time.index.max() - df_with_time.index.min()
-                print("Time span: ", time_span)
+
                 
                 # Set dynamic resampling frequency
                 if time_span <= pd.Timedelta(hours=1):
@@ -276,7 +333,7 @@ def admin_dashboard():
                 elif time_span <= pd.Timedelta(hours=3):
                     resample_freq = '30min'
                 else:
-                    resample_freq = '1H'
+                    resample_freq = '1h'
 
                 # Resample data
                 total_tweets_over_time = df_with_time.resample(resample_freq).size()
@@ -286,6 +343,7 @@ def admin_dashboard():
                 fig, ax = plt.subplots(figsize=(12, 6))  # Specify figure size
                 total_tweets_over_time.plot(ax=ax, label='Total Tweets', linestyle='--')
                 unsafe_tweets_over_time.plot(ax=ax, label='Unsafe Tweets', marker='o', linestyle='-')
+
 
                 ax.set_title('Number of Tweets Over Time')
                 ax.set_xlabel('Time')
@@ -386,57 +444,81 @@ def admin_dashboard():
 
                 # Tab 2: Blocked by Model
                 with tab2:
-                    st.header('Marked by Model')
+                    st.write('##### Marked by Model')
                     buf = plot_grouped_bar_chart(top_users_df[['Blocked by Model']], 'Marked by Model')
                     st.image(buf)
 
                 # Tab 3: Blocked by Admin
                 with tab3:
-                    st.header('Marked by Admin')
+                    st.write('##### Marked by Admin')
                     buf = plot_grouped_bar_chart(top_users_df[['Blocked by Admin']], 'Marked by Admin')
                     st.image(buf)
             else:
                 st.write("No data available for generating statistics.")
-                print("Found no data.")
                 
-
     with tab5:
         # Admin functionalities section
         st.write("## Admin Functions")
 
-        # Add User
-        st.write("### Add User")
-        new_username = st.text_input("Username")
-        new_password = st.text_input("Password", type="password")
-        new_name = st.text_input("Name")
-        if st.button("Add User"):
-            if new_username and new_password and new_name:
-                admin_manager.add_user(new_username, new_password, new_name)
-                st.success(f"User {new_username} added successfully.")
-            else:
-                st.error("Please fill in all fields to add a user.")
+        st.write("### Block Users")
+        if all_users:
+            for username, user_info in all_users.items():
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    st.write(username)  # Display username
+                
+                with col2:
+                    if check_if_user_blocked(username):
+                        # User is blocked, so show "Unblock" button
+                        if st.button(f"Unblock {username}", key=f"unblock_{username}"):
+                            if unblock_user(username):
+                                st.success(f"User {username} unblocked successfully.")
+                            else:
+                                st.error(f"Failed to unblock user {username}.")
+                    else:
+                        # User is not blocked, so show "Block" button
+                        if st.button(f"Block {username}", key=f"block_{username}"):
+                            if block_user(username):
+                                st.success(f"User {username} blocked successfully.")
+                            else:
+                                st.error(f"Failed to block user {username}.")
+        else:
+            st.error("No users to display.")
 
-        # Add Admin
-        st.write("### Add Admin")
-        new_admin_username = st.text_input("Admin Username")
-        new_admin_password = st.text_input("Admin Password", type="password")
-        new_admin_name = st.text_input("Admin Name")
-        if st.button("Add Admin"):
-            if new_admin_username and new_admin_password and new_admin_name:
-                admin_manager.add_admin(new_admin_username, new_admin_password, new_admin_name)
-                st.success(f"Admin {new_admin_username} added successfully.")
-            else:
-                st.error("Please fill in all fields to add an admin.")
+        # # Add User
+        # st.write("### Add User")
+        # new_username = st.text_input("Username")
+        # new_password = st.text_input("Password", type="password")
+        # new_name = st.text_input("Name")
+        # if st.button("Add User"):
+        #     if new_username and new_password and new_name:
+        #         admin_manager.add_user(new_username, new_password, new_name)
+        #         st.success(f"User {new_username} added successfully.")
+        #     else:
+        #         st.error("Please fill in all fields to add a user.")
 
-        # Delete User
-        st.write("### Delete User")
-        del_username = st.text_input("Username to delete")
-        if st.button("Delete User"):
-            if del_username:
-                admin_manager.delete_user(del_username)
-                st.success(f"User {del_username} deleted successfully.")
-            else:
-                st.error("Please provide a username to delete.")
+        # # Add Admin
+        # st.write("### Add Admin")
+        # new_admin_username = st.text_input("Admin Username")
+        # new_admin_password = st.text_input("Admin Password", type="password")
+        # new_admin_name = st.text_input("Admin Name")
+        # if st.button("Add Admin"):
+        #     if new_admin_username and new_admin_password and new_admin_name:
+        #         admin_manager.add_admin(new_admin_username, new_admin_password, new_admin_name)
+        #         st.success(f"Admin {new_admin_username} added successfully.")
+        #     else:
+        #         st.error("Please fill in all fields to add an admin.")
+
+        # # Delete User
+        # st.write("### Delete User")
+        # del_username = st.text_input("Username to delete")
+        # if st.button("Delete User"):
+        #     if del_username:
+        #         admin_manager.delete_user(del_username)
+        #         st.success(f"User {del_username} deleted successfully.")
+        #     else:
+        #         st.error("Please provide a username to delete.")
+
 
 # Function to plot the grouped bar chart
 def plot_grouped_bar_chart(df, title):
