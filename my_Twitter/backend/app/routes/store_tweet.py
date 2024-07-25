@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from backend.database.db import SessionLocal
 from backend.database.models import StoredTweet as StoredTweetModel, Tweet as TweetModel, UpdateSafetyStatus, SafetyStatusChange
 from datetime import datetime, timezone
+from fastapi.responses import JSONResponse
+
 
 router = APIRouter()
 
@@ -63,8 +65,10 @@ def update_safety_status(data: UpdateSafetyStatus, db: Session = Depends(get_db)
     if stored_tweet:
         stored_tweet.safety_status = data.new_safety_status
     else:
-        raise HTTPException(status_code=404, detail="Stored tweet not found")
-
+        return JSONResponse(
+            status_code=200,
+            content={"message": "Stored tweet not found", "status": "info"}
+        )
     # Update the admin result if the caller is admin
     if data.change_source == 'admin':
         tweet.admin_result = data.new_safety_status
