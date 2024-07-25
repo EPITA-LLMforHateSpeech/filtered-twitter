@@ -127,7 +127,6 @@ def admin_dashboard():
             st.write("Here are tweets reported by users and awaiting admin result.")
             with st.spinner("Loading tweets..."):
                 reported_tweets = fetch_reported_tweets()
-                i = 0
                 for report in reported_tweets:
                     tweet = fetch_tweet_by_id(report['tweet_id'])
                     if tweet:
@@ -146,7 +145,7 @@ def admin_dashboard():
                             f"<small>Likes: {tweet.get('likes', 'Not available')} \t\t| Retweets: {tweet.get('retweets', 'Not available')} \t\t| Admin Result: {tweet.get('admin_result', 'Not available')}</small>",
                             unsafe_allow_html=True
                         )
-
+                        
                         # Display the CNN result and probability
                         cnn_prob = tweet.get('cnn_prob', 0) * 100  # Convert to percentage
                         cnn_result_text = "Hatespeech" if tweet.get('cnn_result', 0) == 1 else "Not Hatespeech"
