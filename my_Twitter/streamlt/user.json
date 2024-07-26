@@ -1,0 +1,44 @@
+{
+    "usernames": {
+        "user1": {
+            "email": "user1@email.com",
+            "name": "User One",
+            "password": "abc"
+        },
+        "user2": {
+            "email": "user2@email.com",
+            "name": "User Two",
+            "password": "abc"
+        },
+        "user3": {
+            "email": "user3@email.com",
+            "name": "User Three",
+            "password": "abc"
+        },
+        "user4": {
+            "email": "user4@email.com",
+            "name": "User Four",
+            "password": "abc"
+        },
+        "user5": {
+            "email": "user5@email.com",
+            "name": "User Five",
+            "password": "abc"
+        },
+        "user6": {
+            "email": "user6@email.com",
+            "name": "User Six",
+            "password": "abc"
+        },
+        "user7": {
+            "email": "user7@email.com",
+            "name": "User Seven",
+            "password": "abc"
+        },
+        "user8": {
+            "email": "user8@email.com",
+            "name": "User Eight",
+            "password": "abc"
+        }
+    }
+}
