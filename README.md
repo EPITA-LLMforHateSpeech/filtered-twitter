@@ -10,6 +10,7 @@ This project aims to detect hate speech on Twitter using a machine learning pipe
 
 ## Project Structure
 
+
 ```
 my_Twitter
     ├── backend
