@@ -4,9 +4,12 @@ import streamlit_authenticator as stauth
 from user_management import UserManager
 from tweet_management import TweetManager
 from profile_management import ProfileManager
+import sys
+from os.path import dirname, abspath
+
 
 # Load user data
-with open('user.json') as f:
+with open('../../user.json') as f:
     users = json.load(f)
  
 # Extract user data for authenticator

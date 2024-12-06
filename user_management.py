@@ -1,7 +1,7 @@
 import json
 
 class UserManager:
-    def __init__(self, user_file='user.json'):
+    def __init__(self, user_file='../../user.json'):
         self.user_file = user_file
 
     def load_users(self):
