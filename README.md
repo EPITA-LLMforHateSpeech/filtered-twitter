@@ -29,7 +29,6 @@ filtered-twitter
     │   │   │   ├── prediction.py
     │   │   │   ├── tweet.py
     │   │   ├── utils
-    │   │   │   ├── __pycache__
     │   │   │   ├── __init__.py
     │   │   │   ├── db.py
     │   │   │   ├── prediction_utils.py
@@ -37,7 +36,6 @@ filtered-twitter
     │   │   ├── __init__.py
     │   │   ├── main.py
     │   ├── database
-    │   │   ├── __pycache__
     │   │   ├── db.py
     │   │   ├── models.py
     │   ├── models
@@ -48,7 +46,6 @@ filtered-twitter
     │   ├── data
     │   │   ├── test.csv
     ├── streamlit
-    │   ├── __pycache__
     │   ├── fastapi-backend
     │   ├── admin_management.py
     │   ├── admin.json
