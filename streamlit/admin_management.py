@@ -233,7 +233,11 @@ def admin_dashboard():
                 if risky_tweets:
                     i = 0
                     for tweet in risky_tweets:
-                        st.markdown(f"<small>{tweet.get('user', 'Not available')} | tweet id: {tweet.get('tweet_id', '')}</small>", unsafe_allow_html=True)
+                        user_display = f"{tweet.get('user', 'Not available')} | tweet id: {tweet.get('tweet_id', '')}"
+                        if is_blocked:
+                            user_display += " <span style='color: #FF6347;'> [BLOCKED]<span>"
+                        st.markdown(f"<small>{user_display}</small>", unsafe_allow_html=True)
+
                         st.write(f"<span style='color: #FF6347;'>{tweet.get('tweet', 'Not available')}</span>", unsafe_allow_html=True)
                         st.markdown(f"<small>Likes: {tweet.get('likes', 'Not available')} | Retweets: {tweet.get('retweets', 'Not available')} | Admin Result: {tweet.get('admin_result', 'Not available')}</small>", unsafe_allow_html=True)
                         
@@ -243,9 +247,7 @@ def admin_dashboard():
                             f"<small>Model's decision: <span style='color: #FF6347;'>{cnn_result_text}</span> with probability {cnn_prob:.2f}%</small>",
                             unsafe_allow_html=True
                         )
-
                         if not is_blocked and not tweet.get('cnn_result', 0) == 1:
-
                             col1, col2 = st.columns([1,1])
                             with col1:
                                 if st.button('Mark as Safe', key=f"risky_safe_{tweet['tweet_id'] + str(i)}"):
@@ -303,8 +305,8 @@ def admin_dashboard():
                 st.write("No unsafe tweets marked by the admin found.")
 
     with tab4:
-        st.write("### Statistics Tweets")
-        st.write("Statistics will be displayed here.")
+        st.write("### Tweets Statistics")
+        # st.write("Statistics will be displayed here.")
         with st.spinner("Loading data..."):
             # Fetch all tweets data
             tweets_data = fetch_all_tweets()

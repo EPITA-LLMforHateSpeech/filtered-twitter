@@ -11,7 +11,7 @@ This project aims to detect hate speech on Twitter using a machine learning pipe
 ## Project Structure
 
 ```
-my_Twitter
+filtered-twitter
     ├── backend
     │   ├── app
     │   │   ├── routes
@@ -84,7 +84,6 @@ my_Twitter
 4. Run the frontend:
 
    ```sh
-   cd my_Twitter
    uvicorn backend.app.main:app --reload
    ```
 
@@ -92,7 +91,7 @@ my_Twitter
    From another terminal, run:
 
    ```sh
-   streamlit run .\my_Twitter\streamlit\app.py
+   streamlit run .\streamlit\app.py
    ```
 
 ### Components

@@ -45,7 +45,8 @@ if isinstance(admins, dict):
 
 # Check if the data combined successfully
 if all_users:
-    print("All users data combined successfully.")
+    # print("All users data combined successfully.")
+    pass
 else:
     print("Failed to combine user and admin data.")
 
